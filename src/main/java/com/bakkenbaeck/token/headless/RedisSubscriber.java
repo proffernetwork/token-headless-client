@@ -68,12 +68,12 @@ class RedisSubscriber extends JedisPubSub {
 
                               // save the file to 'attachments/' + filename
                               int randomNum = (int)(Math.random() * 1000000);
-                              String randomFileName = ""+randomNum+".jpg";
+                              String randomFileName = ""+randomNum+".png";
                               String filePath = "attachments/" + randomFileName;
 
                               try {
                                 File outputfile = new File(filePath);
-                                ImageIO.write(img, "jpg", outputfile);
+                                ImageIO.write(img, "png", outputfile);
 
                                 attachments.add(filePath);
                                 System.out.println("Successfully saved the image to " + filePath + " and will now send in message.");
