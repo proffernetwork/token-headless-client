@@ -56,36 +56,44 @@ class RedisSubscriber extends JedisPubSub {
                         JsonNode tempFileName = sofa.get("attachments").get(i).get("filename");
 
                         if (urlNode != null) {
-                            String url = "attachments/" + urlNode.asText();
-                            Boolean exists = new File(url).exists();
-                            if (exists) {
-                                attachments.add(url);
-                            } else {
-                                System.out.println("Attachment " + url + " does not exist");
+                            String url = urlNode.asText();
+
+                            // This is a base64 image
+                            if (url.indexOf(";base64,") >= 0){
+                              String base64data = url.split(",")[1];
+
+                              // create a java Image from the data
+                              byte[] imageBytes = DatatypeConverter.parseBase64Binary(base64data);
+                              BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+
+                              // save the file to 'attachments/' + filename
+                              int randomNum = (int)(Math.random() * 1000000);
+                              String randomFileName = ""+randomNum+".jpg";
+                              String filePath = "attachments/" + randomFileName;
+
+                              try {
+                                File outputfile = new File(filePath);
+                                ImageIO.write(img, "jpg", outputfile);
+
+                                attachments.add(filePath);
+                                System.out.println("Successfully saved the image to " + filePath + " and will now send in message.");
+
+                              }  catch (IOException e) {
+                                  System.out.println("Tried saving " + filePath + " but failed. Will not send this attachment.");
+                              }
                             }
-                        }
-                        else if (imgDataNode != null && tempFileName != null){
-                            String url = "attachments/" + tempFileName.asText();
-                            String base64data = imgDataNode.asText();
 
-                            // create a java Image from the data
-                            byte[] imageBytes = DatatypeConverter.parseBase64Binary(base64data);
-                            BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
-
-                            // save the file to 'attachments/' + filename
-                            try {
-
-                              File outputfile = new File(url);
-                              ImageIO.write(img, "jpg", outputfile);
-
-                              attachments.add(url);
-                              System.out.println("Successfully saved the image to " + url + " and will now send in message.");
-
-                            }  catch (IOException e) {
-                                System.out.println("Tried saving " + url + " but failed. Will not send this attachment.");
+                            // This is a regular image, NOT a base64 image
+                            else {
+                              String filePath = "attachments/" + url;
+                              Boolean exists = new File(filePath).exists();
+                              if (exists) {
+                                  attachments.add(filePath);
+                              } else {
+                                  System.out.println("Attachment " + filePath + " does not exist");
+                              }
                             }
-                        }
-                        else {
+                        } else {
                             System.out.println("Attachment is missing the 'url' property");
                         }
                     }
