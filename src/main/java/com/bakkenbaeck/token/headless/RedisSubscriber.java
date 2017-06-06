@@ -15,6 +15,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+// for converting base 64 image to image file
+import javax.xml.bind.DatatypeConverter;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+
 class RedisSubscriber extends JedisPubSub {
    // private static Logger logger = Logger.getLogger(RedisSubscriber.class);
     private Manager manager;
@@ -42,9 +48,13 @@ class RedisSubscriber extends JedisPubSub {
                 String s = wrapped.getSofa().split("SOFA::\\w+:")[1];
                 JsonNode sofa = mapper.readTree(s);
                 ArrayList<String> attachments = new ArrayList<String>();
+
                 if (sofa.has("attachments")) {
                     for (int i = 0; i < sofa.get("attachments").size(); i++) {
                         JsonNode urlNode = sofa.get("attachments").get(i).get("url");
+                        JsonNode imgDataNode = sofa.get("attachments").get(i).get("base64data");
+                        JsonNode tempFileName = sofa.get("attachments").get(i).get("filename");
+
                         if (urlNode != null) {
                             String url = "attachments/" + urlNode.asText();
                             Boolean exists = new File(url).exists();
@@ -53,7 +63,29 @@ class RedisSubscriber extends JedisPubSub {
                             } else {
                                 System.out.println("Attachment " + url + " does not exist");
                             }
-                        } else {
+                        }
+                        else if (imgDataNode != null && tempFileName != null){
+                            String url = "attachments/" + tempFileName.asText();
+                            String base64data = imgDataNode.asText();
+
+                            // create a java Image from the data
+                            byte[] imageBytes = DatatypeConverter.parseBase64Binary(base64data);
+                            BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+
+                            // save the file to 'attachments/' + filename
+                            try {
+
+                              File outputfile = new File(url);
+                              ImageIO.write(img, "jpg", outputfile);
+
+                              attachments.add(url);
+                              System.out.println("Successfully saved the image to " + url + " and will now send in message.");
+
+                            }  catch (IOException e) {
+                                System.out.println("Tried saving " + url + " but failed. Will not send this attachment.");
+                            }
+                        }
+                        else {
                             System.out.println("Attachment is missing the 'url' property");
                         }
                     }
