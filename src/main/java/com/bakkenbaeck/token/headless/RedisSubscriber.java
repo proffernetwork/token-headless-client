@@ -79,7 +79,8 @@ class RedisSubscriber extends JedisPubSub {
                                 System.out.println("Successfully saved the image to " + filePath + " and will now send in message.");
 
                               }  catch (IOException e) {
-                                  System.out.println("Tried saving " + filePath + " but failed. Will not send this attachment.");
+                                  System.out.println(e);
+                                  System.out.println("Could not save " + filePath + " but failed. Will not send this attachment.");
                               }
                             }
 
