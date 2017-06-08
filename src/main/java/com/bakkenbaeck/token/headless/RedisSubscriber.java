@@ -52,8 +52,6 @@ class RedisSubscriber extends JedisPubSub {
                 if (sofa.has("attachments")) {
                     for (int i = 0; i < sofa.get("attachments").size(); i++) {
                         JsonNode urlNode = sofa.get("attachments").get(i).get("url");
-                        JsonNode imgDataNode = sofa.get("attachments").get(i).get("base64data");
-                        JsonNode tempFileName = sofa.get("attachments").get(i).get("filename");
 
                         if (urlNode != null) {
                             String url = urlNode.asText();
@@ -66,7 +64,7 @@ class RedisSubscriber extends JedisPubSub {
                               byte[] imageBytes = DatatypeConverter.parseBase64Binary(base64data);
                               BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
 
-                              // save the file to 'attachments/' + filename
+                              // save the file to 'attachments/' + filename created using random int
                               int randomNum = (int)(Math.random() * 1000000);
                               String randomFileName = ""+randomNum+".png";
                               String filePath = "attachments/" + randomFileName;
